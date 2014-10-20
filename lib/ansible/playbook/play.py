@@ -187,7 +187,10 @@ class Play(object):
         # calling utils.boolean(None) returns False
         self.gather_facts = ds.get('gather_facts', None)
         if self.gather_facts is not None:
-            self.gather_facts = utils.boolean(self.gather_facts)
+            if type(self.gather_facts) == str:
+                self.gather_facts = self.gather_facts.lower()
+                if not self.gather_facts == 'force':
+                    self.gather_facts = utils.boolean(self.gather_facts)
 
         load_vars['role_names'] = ds.get('role_names', [])
 
