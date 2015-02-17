@@ -36,7 +36,7 @@ class Play(object):
        'handlers', 'remote_user', 'remote_port', 'included_roles', 'accelerate',
        'accelerate_port', 'accelerate_ipv6', 'sudo', 'sudo_user', 'transport', 'playbook',
        'tags', 'gather_facts', 'serial', '_ds', '_handlers', '_tasks',
-       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', '_play_hosts', 'su', 'su_user', 'vault_password'
+       'basedir', 'any_errors_fatal', 'roles', 'max_fail_pct', '_play_hosts', 'su', 'su_user', 'vault_password', 'environment',
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -46,7 +46,7 @@ class Play(object):
        'tasks', 'handlers', 'remote_user', 'user', 'port', 'include', 'accelerate', 'accelerate_port', 'accelerate_ipv6',
        'sudo', 'sudo_user', 'connection', 'tags', 'gather_facts', 'serial',
        'any_errors_fatal', 'roles', 'role_names', 'pre_tasks', 'post_tasks', 'max_fail_percentage',
-       'su', 'su_user', 'vault_password'
+       'su', 'su_user', 'vault_password', 'environment',
     ]
 
     # *************************************************
@@ -67,6 +67,7 @@ class Play(object):
         self.roles            = ds.get('roles', None)
         self.tags             = ds.get('tags', None)
         self.vault_password   = vault_password
+        self.environment      = ds.get('environment', {})
 
         if self.tags is None:
             self.tags = []
@@ -92,7 +93,7 @@ class Play(object):
         # now we load the roles into the datastructure
         self.included_roles = []
         ds = self._load_roles(self.roles, ds)
-        
+
         # and finally re-process the vars files as they may have
         # been updated by the included roles
         self.vars_files = ds.get('vars_files', [])
@@ -173,7 +174,7 @@ class Play(object):
     def _get_role_path(self, role):
         """
         Returns the path on disk to the directory containing
-        the role directories like tasks, templates, etc. Also 
+        the role directories like tasks, templates, etc. Also
         returns any variables that were included with the role
         """
         orig_path = template(self.basedir,role,self.vars)
@@ -248,7 +249,7 @@ class Play(object):
                                 allow_dupes = utils.boolean(meta_data.get('allow_duplicates',''))
 
                         # if any tags were specified as role/dep variables, merge
-                        # them into the current dep_vars so they're passed on to any 
+                        # them into the current dep_vars so they're passed on to any
                         # further dependencies too, and so we only have one place
                         # (dep_vars) to look for tags going forward
                         def __merge_tags(var_obj):
@@ -324,7 +325,7 @@ class Play(object):
                         dep_stack.append([dep,dep_path,dep_vars,dep_defaults_data])
 
             # only add the current role when we're at the top level,
-            # otherwise we'll end up in a recursive loop 
+            # otherwise we'll end up in a recursive loop
             if level == 0:
                 self.included_roles.append(role)
                 dep_stack.append([role,role_path,role_vars,defaults_data])
@@ -511,7 +512,7 @@ class Play(object):
             if not isinstance(x, dict):
                 raise errors.AnsibleError("expecting dict; got: %s, error in %s" % (x, original_file))
 
-            # evaluate sudo vars for current and child tasks 
+            # evaluate sudo vars for current and child tasks
             included_sudo_vars = {}
             for k in ["sudo", "sudo_user"]:
                 if k in x:
@@ -559,7 +560,7 @@ class Play(object):
                 else:
                     default_vars = utils.combine_vars(self.default_vars, default_vars)
 
-                # append the vars defined with the include (from above) 
+                # append the vars defined with the include (from above)
                 # as well as the old-style 'vars' element. The old-style
                 # vars are given higher precedence here (just in case)
                 task_vars = utils.combine_vars(task_vars, include_vars)
@@ -609,8 +610,8 @@ class Play(object):
 
     def _is_valid_tag(self, tag_list):
         """
-        Check to see if the list of tags passed in is in the list of tags 
-        we only want (playbook.only_tags), or if it is not in the list of 
+        Check to see if the list of tags passed in is in the list of tags
+        we only want (playbook.only_tags), or if it is not in the list of
         tags we don't want (playbook.skip_tags).
         """
         matched_skip_tags = set(tag_list) & set(self.playbook.skip_tags)
@@ -773,7 +774,7 @@ class Play(object):
                 inject.update(self.vars)
                 filename4 = template(self.basedir, filename3, inject)
                 filename4 = utils.path_dwim(self.basedir, filename4)
-            else:    
+            else:
                 filename4 = utils.path_dwim(self.basedir, filename3)
             return filename2, filename3, filename4
 
@@ -822,7 +823,7 @@ class Play(object):
             inject.update(self.playbook.SETUP_CACHE.get(host, {}))
             inject.update(self.playbook.VARS_CACHE.get(host, {}))
         else:
-            inject = None            
+            inject = None
 
         for filename in self.vars_files:
             if type(filename) == list:
