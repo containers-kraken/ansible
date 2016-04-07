@@ -1803,6 +1803,9 @@ class LinuxNetwork(Network):
                 promisc_mode = (data & 0x0100 > 0)
                 interfaces[device]['promisc'] = promisc_mode
 
+            if not interfaces[device]['active']:
+                continue
+
             def parse_ip_output(output, secondary=False):
                 for line in output.split('\n'):
                     if not line:
