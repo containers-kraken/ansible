@@ -1752,6 +1752,12 @@ class LinuxNetwork(Network):
             if not os.path.isdir(path):
                 continue
             device = os.path.basename(path)
+            if (device.startswith('ns')
+                or device.startswith('qbr')
+                or device.startswith('qvb')
+                or device.startswith('qvo')
+                or device.startswith('tap')):
+                continue
             interfaces[device] = { 'device': device }
             if os.path.exists(os.path.join(path, 'address')):
                 macaddress = get_file_content(os.path.join(path, 'address'), default='')
@@ -1802,9 +1808,6 @@ class LinuxNetwork(Network):
                 data = int(get_file_content(os.path.join(path, 'flags')),16)
                 promisc_mode = (data & 0x0100 > 0)
                 interfaces[device]['promisc'] = promisc_mode
-
-            if not interfaces[device]['active']:
-                continue
 
             def parse_ip_output(output, secondary=False):
                 for line in output.split('\n'):
