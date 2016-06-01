@@ -62,7 +62,7 @@ class ShellModule(object):
         cmd = 'mkdir -p %s' % basetmp
         if mode:
             cmd += ' && chmod %s %s' % (mode, basetmp)
-        cmd += ' && echo %s' % basetmp
+        cmd += ' && echo %s && sleep 0.1' % basetmp
         return cmd
 
     def expand_user(self, user_home_path):
